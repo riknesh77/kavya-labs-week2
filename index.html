@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kavya Labs | Week 2 Auth</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Kavya Labs home">
+        <span class="brand-mark">K</span>
+        <span>Kavya Labs</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#auth">Auth</a>
+        <a href="#security">Security</a>
+        <a href="#protected">Workspace</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Week 2 - User authentication</p>
+          <h1>Secure founder access with Google OAuth.</h1>
+          <p>
+            Kavya Labs now has an authentication experience modeled around
+            NextAuth and Google OAuth, including sign in, session status, and a
+            protected workspace preview.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-link" href="#auth">Try sign in</a>
+            <a class="secondary-link" href="#protected">View protected area</a>
+          </div>
+        </div>
+
+        <section class="auth-card" id="auth" aria-label="Authentication demo">
+          <div class="auth-state" id="signedOut">
+            <div class="card-heading">
+              <span class="status-dot"></span>
+              <p>Signed out</p>
+            </div>
+            <h2>Continue to Kavya Labs</h2>
+            <p class="muted">
+              Use Google OAuth to create a verified session before entering the
+              founder workspace.
+            </p>
+            <button class="google-button" id="googleSignIn" type="button">
+              <span class="google-icon">G</span>
+              Continue with Google
+            </button>
+            <p class="fine-print">
+              Demo session mirrors the NextAuth Google provider flow.
+            </p>
+          </div>
+
+          <div class="auth-state is-hidden" id="signedIn">
+            <div class="card-heading success">
+              <span class="status-dot"></span>
+              <p>Session active</p>
+            </div>
+            <div class="profile-row">
+              <div class="avatar">RM</div>
+              <div>
+                <h2>Welcome, Rohan</h2>
+                <p class="muted">rohan@kavyalabs.ai</p>
+              </div>
+            </div>
+            <div class="session-box">
+              <strong>Protected workspace unlocked</strong>
+              <span>Session provider: Google OAuth via NextAuth</span>
+            </div>
+            <button class="sign-out" id="signOut" type="button">Sign out</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="feature-band" id="security" aria-label="Authentication features">
+        <article>
+          <span>01</span>
+          <h3>Google OAuth</h3>
+          <p>
+            A clear sign-in entry point for users who should access Kavya Labs
+            with a trusted identity provider.
+          </p>
+        </article>
+        <article>
+          <span>02</span>
+          <h3>Session management</h3>
+          <p>
+            The interface updates based on authentication status, matching the
+            flow expected from a NextAuth session.
+          </p>
+        </article>
+        <article>
+          <span>03</span>
+          <h3>Protected routes</h3>
+          <p>
+            Workspace content is visually locked until sign in succeeds, then
+            becomes available to the active user.
+          </p>
+        </article>
+      </section>
+
+      <section class="workspace" id="protected" aria-label="Protected workspace">
+        <div>
+          <p class="eyebrow">Protected area</p>
+          <h2>Founder workspace preview</h2>
+          <p>
+            Authenticated users can review launch tasks, product milestones, and
+            account details after their Google-backed session is created.
+          </p>
+        </div>
+        <div class="workspace-panel" id="workspacePanel">
+          <div class="locked-message" id="lockedMessage">
+            <h3>Sign in required</h3>
+            <p>Start with Google OAuth to unlock the private workspace.</p>
+          </div>
+          <div class="workspace-content is-hidden" id="workspaceContent">
+            <div class="metric">
+              <span>Launch readiness</span>
+              <strong>82%</strong>
+            </div>
+            <ul>
+              <li>Session callback validates the user profile.</li>
+              <li>Protected pages redirect signed-out visitors.</li>
+              <li>Logout clears the active browser session.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Kavya Labs - Week 2 authentication submission</p>
+      <p>NextAuth + Google OAuth</p>
+    </footer>
+
+    <script>
+      const signInButton = document.querySelector("#googleSignIn");
+      const signOutButton = document.querySelector("#signOut");
+      const signedOut = document.querySelector("#signedOut");
+      const signedIn = document.querySelector("#signedIn");
+      const lockedMessage = document.querySelector("#lockedMessage");
+      const workspaceContent = document.querySelector("#workspaceContent");
+      const sessionKey = "kavya-labs-auth-session";
+
+      function renderSession() {
+        const active = localStorage.getItem(sessionKey) === "active";
+        signedOut.classList.toggle("is-hidden", active);
+        signedIn.classList.toggle("is-hidden", !active);
+        lockedMessage.classList.toggle("is-hidden", active);
+        workspaceContent.classList.toggle("is-hidden", !active);
+      }
+
+      signInButton.addEventListener("click", () => {
+        localStorage.setItem(sessionKey, "active");
+        renderSession();
+      });
+
+      signOutButton.addEventListener("click", () => {
+        localStorage.removeItem(sessionKey);
+        renderSession();
+      });
+
+      renderSession();
+    </script>
+  </body>
+</html>
