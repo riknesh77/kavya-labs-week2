@@ -1,0 +1,53 @@
+import {createRequire} from 'node:module';
+import {spawn} from 'node:child_process';
+import assert from 'node:assert/strict';
+const require=createRequire(import.meta.url);
+const {chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
+const base=process.env.TEST_URL||'http://127.0.0.1:3017';
+let server;
+if(!process.env.TEST_URL){server=spawn(process.execPath,['node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port','3017'],{env:{...process.env,NEXTAUTH_URL:base},stdio:['ignore','pipe','pipe']});server.stdout.on('data',d=>process.stdout.write(d));server.stderr.on('data',d=>process.stderr.write(d));}
+let browser;
+try{
+ for(let i=0;i<40;i++){try{await fetch(base+'/login');break;}catch{await new Promise(r=>setTimeout(r,250));}}
+ browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ const page=await browser.newPage({viewport:{width:1440,height:1000}});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(base);
+ await page.waitForURL('**/login');
+ assert.equal((await page.request.get(base+'/api/users')).status(),401);
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await page.getByRole('heading',{name:'Workspace overview.'}).waitFor();
+ await page.getByRole('button',{name:'Add user',exact:true}).waitFor({state:'visible'});
+ await page.waitForFunction(()=>!document.querySelector('button.primary')?.disabled);
+ await page.screenshot({path:'/tmp/kavya-desktop.png',fullPage:true});
+ await page.getByRole('button',{name:'Add user',exact:true}).click();
+ await page.getByLabel('Full name').fill('Verification User');
+ await page.getByLabel('Email address',{exact:true}).fill('verification@kavya.example');
+ await page.getByRole('dialog').getByRole('button',{name:'Add user',exact:true}).click();
+ await page.getByRole('status').filter({hasText:'User added.'}).waitFor();
+ await page.reload();
+ await page.getByText('verification@kavya.example',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Edit Verification User',exact:true}).click();
+ await page.getByLabel('Status',{exact:true}).selectOption('Suspended');
+ await page.getByRole('button',{name:'Save changes',exact:true}).click();
+ await page.getByRole('status').filter({hasText:'Changes saved.'}).waitFor();
+ await page.getByRole('row').filter({hasText:'verification@kavya.example'}).getByText('Suspended',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Delete Verification User',exact:true}).click();
+ await page.getByRole('button',{name:'Remove user',exact:true}).click();
+ await page.getByRole('status').filter({hasText:'User removed.'}).waitFor();
+ await page.getByRole('button',{name:'Users',exact:false}).filter({hasText:/^Users/}).click();
+ await page.getByRole('textbox',{name:'Search users'}).fill('ananya');
+ assert.equal(await page.locator('tbody tr').count(),1);
+ await page.getByRole('textbox',{name:'Search users'}).fill('');
+ const download=page.waitForEvent('download');await page.getByRole('button',{name:'Export',exact:true}).click();assert.equal((await download).suggestedFilename(),'kavya-users.csv');
+ await page.setViewportSize({width:390,height:844});
+ await page.screenshot({path:'/tmp/kavya-mobile.png',fullPage:true});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
+ const viewer=await browser.newPage();await viewer.goto(base+'/login');
+ await viewer.getByLabel('Email address').fill('viewer@kavya.example');await viewer.getByRole('button',{name:'Sign in',exact:true}).click();
+ await viewer.getByText('Read-only access.',{exact:false}).waitFor();
+ const forbidden=await viewer.request.post(base+'/api/users',{headers:{Origin:base},data:{}});assert.equal(forbidden.status(),403);
+ assert.equal(await viewer.getByRole('button',{name:'Add user',exact:true}).count(),0);
+ assert.deepEqual(errors,[]);
+ console.log('PASS: protected routes, admin login, persistent CRUD, search, CSV, mobile overflow, viewer 403, no page errors.');
+}finally{await browser?.close();server?.kill('SIGTERM');}

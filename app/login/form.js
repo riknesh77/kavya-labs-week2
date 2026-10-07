@@ -1,0 +1,9 @@
+'use client';
+import { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { ArrowRight, ShieldCheck, Layers3 } from 'lucide-react';
+export default function Login({google}) {
+  const [error,setError]=useState('');const [busy,setBusy]=useState(false);
+  async function login(e) { e.preventDefault();setBusy(true);setError(''); const data=new FormData(e.currentTarget);try {const result=await signIn('credentials',{email:data.get('email'),password:data.get('password'),redirect:false});if(result?.error) {setError('Email or password is incorrect.');setBusy(false);}else window.location.assign('/');}catch {setError('Unable to sign in. Try again.');setBusy(false);} }
+  return <main className="login-page"><div className="login-brand"><span className="logo"><Layers3 size={23}/></span>Kavya Labs</div><section className="login-panel"><span className="eyebrow">WORKSPACE ACCESS</span><h1>Welcome back.</h1><p className="muted">Sign in to your Kavya Labs workspace.</p><form onSubmit={login}><label>Email address<input name="email" type="email" autoComplete="username" defaultValue="admin@kavya.example" required/></label><label>Password<input name="password" type="password" autoComplete="current-password" defaultValue="KavyaDemo2026!" required/></label>{error&&<p role="alert" className="error">{error}</p>}<button className="primary" disabled={busy}>{busy?'Signing in...':'Sign in'}<ArrowRight size={17}/></button></form>{google&&<button className="google" onClick={()=>signIn('google',{callbackUrl:'/'})}>Continue with Google</button>}<div className="demo-note"><ShieldCheck size={19}/><div><strong>Interactive demo workspace</strong><p>Admin: admin@kavya.example<br/>Read-only: viewer@kavya.example<br/>Password: KavyaDemo2026!</p><small>Fictional users. Changes are saved and shared.</small></div></div></section><footer>KAVYA LABS <span>/</span> WEEK 03</footer></main>;
+}
