@@ -2,7 +2,9 @@
 
 Week 3 brief: **Admin dashboard - user management + analytics**.
 
-Live app: https://kavya-labs-week3.vercel.app
+Intended deployment: https://kavya-labs-week3.vercel.app
+
+Deployment is pending Vercel account access; this URL is not yet verified live.
 
 This branch contains the complete Next.js application. The `main` branch retains the earlier Week 2 submission.
 
